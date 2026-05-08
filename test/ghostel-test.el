@@ -8106,6 +8106,18 @@ side effects have to happen explicitly inside the command."
           (should (equal sent (list (string 7)))))
       (kill-buffer buf))))
 
+(ert-deftest ghostel-test-c-g-binding-routes-through-send-handler ()
+  "\\`C-g' must resolve to `ghostel-send-C-g' in semi-char and char modes.
+`ghostel--define-terminal-keys' binds every \\`C-<letter>' to a
+lambda that sends the raw control code.  Without skipping \\`C-g',
+that lambda shadows the parent `ghostel-mode-map' binding to
+`ghostel-send-C-g' and the function `deactivate-mark' plus the
+`quit-flag' clear vanish on real keypresses."
+  (should (eq (lookup-key ghostel-semi-char-mode-map (kbd "C-g"))
+              #'ghostel-send-C-g))
+  (should (eq (lookup-key ghostel-char-mode-map (kbd "C-g"))
+              #'ghostel-send-C-g)))
+
 (ert-deftest ghostel-test-meta-key-bindings ()
   "All non-exception M-<letter> keys should be bound in semi-char-mode-map."
   (dolist (c (number-sequence ?a ?z))

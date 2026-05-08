@@ -1316,7 +1316,9 @@ When NO-EXCEPTIONS is non-nil, also bind the keys in
   ;; Control keys — bind all C-<letter> to send ASCII control codes.
   ;; C-i = TAB and C-m = RET are equivalent to <tab>/<return> (bound above).
   ;; C-y is reserved for ghostel-yank in semi-char mode.
-  (let ((skip (if no-exceptions '(?i ?m) '(?i ?m ?y))))
+  ;; C-g is always handled by `ghostel-send-C-g' so the mark and
+  ;; `quit-flag' are cleared in addition to forwarding BEL.
+  (let ((skip (if no-exceptions '(?i ?m ?g) '(?i ?m ?y ?g))))
     (dolist (c (number-sequence ?a ?z))
       (let ((key-str (format "C-%c" c)))
         (unless (or (memq c skip)
@@ -1423,6 +1425,8 @@ Most keys are sent to the terminal.  Keys in
   (let ((map (make-sparse-keymap)))
     ;; No parent — char mode captures everything, including C-c.
     (ghostel--define-terminal-keys map 'no-exceptions)
+    ;; Bind `ghostel-send-C-g' so quit-flag and the mark get cleared.
+    (define-key map (kbd "C-g") #'ghostel-send-C-g)
     ;; Mouse click/drag for terminal mouse tracking (no parent to
     ;; inherit from; scroll wheel is handled by the emulation alist).
     (define-key map (kbd "<down-mouse-1>")  #'ghostel--mouse-press)
