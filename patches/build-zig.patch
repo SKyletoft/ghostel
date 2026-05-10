@@ -1,0 +1,68 @@
+diff --git a/build.zig b/build.zig
+index 55a1397..de74ffa 100644
+--- a/build.zig
++++ b/build.zig
+@@ -2,24 +2,18 @@ const std = @import("std");
+ 
+ const vendored_emacs_module_dir = "vendor";
+ 
++const ghostty_so_dir =
++    "GHOSTTY_NIX_PATH/lib";
++
++const ghostty_include =
++    "GHOSTTY_NIX_PATH/include";
++
+ pub fn build(b: *std.Build) void {
+     const target = b.standardTargetOptions(.{});
+     const optimize = b.standardOptimizeOption(.{});
+-    const ghostty_optimize = b.option(
+-        std.builtin.OptimizeMode,
+-        "ghostty-optimize",
+-        "Optimization mode for the ghostty dependency (defaults to the main optimize option)",
+-    ) orelse optimize;
+     const is_release = optimize != .Debug;
+     const target_os = target.result.os.tag;
+     const emacs_module_dir = resolveEmacsModuleDir(b);
+-    const ghostty_dep = b.dependency("ghostty", .{
+-        .target = target,
+-        .optimize = ghostty_optimize,
+-        .@"emit-lib-vt" = true,
+-    });
+-
+-    const ghostty_lib = ghostty_dep.artifact("ghostty-vt-static");
+ 
+     const mod = b.createModule(.{
+         .root_source_file = b.path("src/module.zig"),
+@@ -29,8 +23,14 @@ pub fn build(b: *std.Build) void {
+         .strip = if (is_release) true else null,
+         .omit_frame_pointer = if (is_release) true else null,
+     });
+-    addModuleIncludes(mod, emacs_module_dir, ghostty_lib);
+-    mod.linkLibrary(ghostty_lib);
++
++    // Emacs headers + ghostty headers (if needed)
++    mod.addSystemIncludePath(emacs_module_dir);
++
++    // Link against prebuilt Ghostty shared library
++    mod.addIncludePath(.{ .cwd_relative = ghostty_include });
++    mod.addLibraryPath(.{ .cwd_relative = ghostty_so_dir });
++    mod.linkSystemLibrary("ghostty-vt", .{ .preferred_link_mode = .dynamic });
+ 
+     // stb_image for PNG decoding (kitty graphics)
+     mod.addIncludePath(b.path("vendor/stb"));
+@@ -90,15 +90,6 @@ pub fn build(b: *std.Build) void {
+     test_step.dependOn(&b.addRunArtifact(png_tests).step);
+ }
+ 
+-fn addModuleIncludes(
+-    mod: *std.Build.Module,
+-    emacs_module_dir: std.Build.LazyPath,
+-    ghostty_lib: *std.Build.Step.Compile,
+-) void {
+-    mod.addSystemIncludePath(emacs_module_dir);
+-    mod.addIncludePath(ghostty_lib.getEmittedIncludeTree());
+-}
+-
+ fn resolveEmacsModuleDir(b: *std.Build) std.Build.LazyPath {
+     if (b.graph.env_map.get("EMACS_INCLUDE_DIR")) |dir| {
+         ensureEmacsModuleHeaderExists(b.allocator, "EMACS_INCLUDE_DIR", dir);

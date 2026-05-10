@@ -11,10 +11,19 @@
 		packages.default = pkgs.stdenv.mkDerivation rec {
 			pname = "ghostel";
 			version = "0.24.0";
-			src = ./.;
+			src = pkgs.fetchFromGitHub {
+				owner = "dakra";
+				repo = "ghostel";
+				rev = "v${version}";
+				hash = "sha256-TYFd+4a2PYH/cxe2SXJeTEWZbd+VwB8hml5VF8MahAE=";
+			};
+			patches = [
+				./patches/build-zig.patch
+				./patches/build-zig-zon.patch
+			];
 			nativeBuildInputs = [ pkgs.zig_0_15 ];
 			buildInputs = [ ghostty.packages.${system}.libghostty-vt ];
-			patchPhase = ''
+			postPatch = ''
 				sed -i "s|GHOSTTY_NIX_PATH|${ghostty.packages.${system}.libghostty-vt}|g" build.zig
 			'';
 			buildPhase = ''
