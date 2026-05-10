@@ -24,7 +24,7 @@
 				let real-out = "$out/share/emacs/site-lisp/elpa/ghostel-${version}";
 				in ''
 					mkdir -p ${real-out}
-					cp ghostel-module.so ${real-out}/libghostel-module.so
+					cp ghostel-module.so ${real-out}
 					cp $src/symbols.map ${real-out}
 					cp $src/lisp/*.el ${real-out}
 					cp -r $src/vendor $src/etc ${real-out}
