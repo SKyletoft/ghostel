@@ -10,12 +10,12 @@
 	in {
 		packages.default = pkgs.stdenv.mkDerivation rec {
 			pname = "ghostel";
-			version = "0.24.0";
+			version = "0.27.0";
 			src = pkgs.fetchFromGitHub {
 				owner = "dakra";
 				repo = "ghostel";
 				rev = "v${version}";
-				hash = "sha256-TYFd+4a2PYH/cxe2SXJeTEWZbd+VwB8hml5VF8MahAE=";
+				hash = "sha256-Hr/Pd5g9ckXKWh/NMYfRpm5es+ap3D+q4Bk7FdFotkU=";
 			};
 			patches = [
 				./patches/build-zig.patch
